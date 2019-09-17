@@ -8,28 +8,23 @@ class Application extends Component {
     posts: [],
   };
 
+  unsubscribe = null;
+
   componentDidMount = async () => {
-    const snapshot = await firestore.collection('posts').get()
-
-
-    const posts = snapshot.docs.map(collectIdsAndDocs)
-
-    this.setState({ posts })
-
-    console.log(snapshot)
+    // const snapshot = await firestore.collection('posts').get()
+    // const posts = snapshot.docs.map(collectIdsAndDocs)  
+    // this.setState({ posts })
+    this.unsubscribe = firestore.collection('posts').onSnapshot(snapshot => {
+      const posts = snapshot.docs.map(collectIdsAndDocs)
+      this.setState({ posts })
+    })
+    // returns a function to unsubscribe and unmount, onSnapshot will put a listener on and listen for updates
   }
 
-  handleCreate = async post => {
-    const { posts } = this.state;
+  componentWillUnmount = () => {
+    this.unsubscribe()
+  }
 
-    const docRef = await firestore.collection('posts').add(post)
-    const doc = await docRef.get();
-
-    const newPost = collectIdsAndDocs(doc)
-
-
-    this.setState({ posts: [newPost, ...posts] });
-  };
 
   render() {
     const { posts } = this.state;
@@ -37,7 +32,7 @@ class Application extends Component {
     return (
       <main className="Application">
         <h1>Think Piece</h1>
-        <Posts posts={posts} onCreate={this.handleCreate} />
+        <Posts posts={posts} />
       </main>
     );
   }
